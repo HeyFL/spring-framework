@@ -246,7 +246,9 @@ final class PostProcessorRegistrationDelegate {
 		registerBeanPostProcessors(beanFactory, nonOrderedPostProcessors);
 
 		// Finally, re-register all internal BeanPostProcessors.
+		//对PostProcessors进行排序
 		sortPostProcessors(internalPostProcessors, beanFactory);
+		//注册PostProcessors到beanFactory的beanPostProcessors变量中
 		registerBeanPostProcessors(beanFactory, internalPostProcessors);
 
 		// Re-register post-processor for detecting inner beans as ApplicationListeners,
@@ -294,6 +296,7 @@ final class PostProcessorRegistrationDelegate {
 			ConfigurableListableBeanFactory beanFactory, List<BeanPostProcessor> postProcessors) {
 
 		for (BeanPostProcessor postProcessor : postProcessors) {
+			//先移出原有的、再添加新的BeanPostProcessor，用了CopyOnWriteArrayList保证了并发可用性
 			beanFactory.addBeanPostProcessor(postProcessor);
 		}
 	}
