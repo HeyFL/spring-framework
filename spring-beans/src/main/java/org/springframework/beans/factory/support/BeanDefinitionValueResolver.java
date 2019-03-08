@@ -103,6 +103,7 @@ class BeanDefinitionValueResolver {
 	 */
 	@Nullable
 	public Object resolveValueIfNecessary(Object argName, @Nullable Object value) {
+		//本方法解析bean的关系 List map set等
 		// We must check each value to see whether it requires a runtime reference
 		// to another bean to be resolved.
 		if (value instanceof RuntimeBeanReference) {
