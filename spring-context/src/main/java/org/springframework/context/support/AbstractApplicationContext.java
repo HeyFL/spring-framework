@@ -577,13 +577,13 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 				//★★★绑定监听器End:★★★
 
 
-				//实例化BeanFactory中已经被注册(解析成beanDefinitionNames的) 但是未实例化的所有实例
+				//实例化BeanFactory中已经被注册(解析成beanDefinitionNames的) 但是未实例化的所有实例  也就是加载->实例化的过程
 				//PS.BeanPostProcessor在这里起效(Bean初始化前后)
 				// Instantiate all remaining (non-lazy-init) singletons.
 				finishBeanFactoryInitialization(beanFactory);
 
 				//1.初始化生命周期处理器
-				//2.调用所有实现生命周期接口SmartLifecycle的start()方法  其实就是所有bean加载和初始化完毕执行其start()方法
+				//2.调用所有实现生命周期接口LifecycleProcessor的start()方法  其实就是所有bean加载和初始化完毕执行其start()方法
 				//3.广播一个ContextRefreshedEvent事件
 				//4.根据配置决定是否启动 JMX来实时查看spring放在applicationContext里的bean列表功能
 				// Last step: publish corresponding event.
@@ -931,12 +931,13 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 		// Clear context-level resource caches (such as ASM metadata from scanning).
 		clearResourceCaches();
 
-		//初始化生命周期处理器
+		// LifecycleProcessor实例初始化
+		// LifecycleProcessor 是所有Lifecycle实现类的管家 里面包含了对Lifecycle的各种操作
 		// Initialize lifecycle processor for this context.
 		initLifecycleProcessor();
 
 
-		//获取实现了 SmartLifecycle 接口的类 并调用其start方法的
+		//获取实现了Lifecycle接口的类 调用其start方法 (如果autoStartupOnly && isAutoStartup()==true)
 		// Propagate refresh to lifecycle processor first.
 		getLifecycleProcessor().onRefresh();
 

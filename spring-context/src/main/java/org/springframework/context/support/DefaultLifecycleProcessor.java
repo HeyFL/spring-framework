@@ -99,6 +99,7 @@ public class DefaultLifecycleProcessor implements LifecycleProcessor, BeanFactor
 	 */
 	@Override
 	public void start() {
+		//获取实现了Lifecycle接口的类   如果autoStartupOnly && isAutoStartup()==true  调用其start方法
 		startBeans(false);
 		this.running = true;
 	}
@@ -119,6 +120,7 @@ public class DefaultLifecycleProcessor implements LifecycleProcessor, BeanFactor
 
 	@Override
 	public void onRefresh() {
+		//获取实现了Lifecycle接口的类   如果autoStartupOnly && isAutoStartup()==true  调用其start方法
 		startBeans(true);
 		this.running = true;
 	}
@@ -134,10 +136,12 @@ public class DefaultLifecycleProcessor implements LifecycleProcessor, BeanFactor
 		return this.running;
 	}
 
-
-	// Internal helpers
-	// 获取实现了SmartLifecycle接口的类 并调用其start方法的
+	/**
+	 * 获取实现了Lifecycle接口的类   如果autoStartupOnly && isAutoStartup()==true  调用其start方法
+	 * @param autoStartupOnly
+	 */
 	private void startBeans(boolean autoStartupOnly) {
+		//获取所有的Lifecycle的实现类
 		Map<String, Lifecycle> lifecycleBeans = getLifecycleBeans();
 		Map<Integer, LifecycleGroup> phases = new HashMap<>();
 		lifecycleBeans.forEach((beanName, bean) -> {
@@ -151,6 +155,8 @@ public class DefaultLifecycleProcessor implements LifecycleProcessor, BeanFactor
 				group.add(beanName, bean);
 			}
 		});
+
+		//根据Lifecycle定义的phases排序后，按定义的phases顺序执行
 		if (!phases.isEmpty()) {
 			List<Integer> keys = new ArrayList<>(phases.keySet());
 			Collections.sort(keys);
