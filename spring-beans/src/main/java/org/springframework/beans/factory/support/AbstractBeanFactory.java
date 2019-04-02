@@ -243,8 +243,10 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 		Object bean;
 
 		// Eagerly check singleton cache for manually registered singletons.
+		//desc 从(单例)bean池、缓存池里获取bean，并返回  (如果该bean还未被创建  返回空)
 		Object sharedInstance = getSingleton(beanName);
 		if (sharedInstance != null && args == null) {
+			//desc 缓存池找到该bean && 没有args参数
 			if (logger.isTraceEnabled()) {
 				if (isSingletonCurrentlyInCreation(beanName)) {
 					logger.trace("Returning eagerly cached instance of singleton bean '" + beanName +
@@ -254,21 +256,27 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 					logger.trace("Returning cached instance of singleton bean '" + beanName + "'");
 				}
 			}
+			//TODO bean!=null 正式初始化bean
 			bean = getObjectForBeanInstance(sharedInstance, name, beanName, null);
 		}
 
 		else {
+			// desc 带args参数 或 在[缓存池]里找到该bean
+
 			// Fail if we're already creating this bean instance:
 			// We're assumably within a circular reference.
 			if (isPrototypeCurrentlyInCreation(beanName)) {
+				//TODO chris 如果这个[Prototype]对象正在创建   那就报错?  看不懂   说是为了解决循环依赖
 				throw new BeanCurrentlyInCreationException(beanName);
 			}
 
 			// Check if bean definition exists in this factory.
 			BeanFactory parentBeanFactory = getParentBeanFactory();
 			if (parentBeanFactory != null && !containsBeanDefinition(beanName)) {
+				// desc 尝试使用父beanFactory进行getbean
 				// Not found -> check parent.
 				String nameToLookup = originalBeanName(name);
+				////desc 以下if-else都是使用父类beanFactory 重新递归doGetBean
 				if (parentBeanFactory instanceof AbstractBeanFactory) {
 					return ((AbstractBeanFactory) parentBeanFactory).doGetBean(
 							nameToLookup, requiredType, args, typeCheckOnly);
@@ -327,6 +335,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 							throw ex;
 						}
 					});
+					//desc 正式初始化bean
 					bean = getObjectForBeanInstance(sharedInstance, name, beanName, mbd);
 				}
 
@@ -340,6 +349,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 					finally {
 						afterPrototypeCreation(beanName);
 					}
+					//desc 正式初始化bean
 					bean = getObjectForBeanInstance(prototypeInstance, name, beanName, mbd);
 				}
 
@@ -359,6 +369,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 								afterPrototypeCreation(beanName);
 							}
 						});
+						//desc 正式初始化bean
 						bean = getObjectForBeanInstance(scopedInstance, name, beanName, mbd);
 					}
 					catch (IllegalStateException ex) {
@@ -1632,7 +1643,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 
 	/**
 	 * Get the object for the given bean instance, either the bean
-	 * instance itself or its created object in case of a FactoryBean.
+	  instance itself or its created object in case of a FactoryBean.
 	 * @param beanInstance the shared bean instance
 	 * @param name name that may include factory dereference prefix
 	 * @param beanName the canonical bean name

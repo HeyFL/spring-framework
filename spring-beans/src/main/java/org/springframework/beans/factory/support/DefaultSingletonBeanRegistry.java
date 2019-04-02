@@ -70,13 +70,22 @@ import org.springframework.util.StringUtils;
  */
 public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements SingletonBeanRegistry {
 
-	/** Cache of singleton objects: bean name to bean instance. */
+	/**
+	 * desc 单例对象的cache  只有[创建完成]&&[初始化属性完成]的才会放入这里
+	 * Cache of singleton objects: bean name to bean instance.
+	 */
 	private final Map<String, Object> singletonObjects = new ConcurrentHashMap<>(256);
 
-	/** Cache of singleton factories: bean name to ObjectFactory. */
+	/**
+	 * desc 单例对象工厂的cache
+	 * Cache of singleton factories: bean name to ObjectFactory.
+	 */
 	private final Map<String, ObjectFactory<?>> singletonFactories = new HashMap<>(16);
 
-	/** Cache of early singleton objects: bean name to bean instance. */
+	/**
+	 * desc 提前曝光的单例对象 只会放入[创建完成的][提前曝光的]
+	 * Cache of early singleton objects: bean name to bean instance.
+	 */
 	private final Map<String, Object> earlySingletonObjects = new HashMap<>(16);
 
 	/** Set of registered singletons, containing the bean names in registration order. */
@@ -158,6 +167,10 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 		}
 	}
 
+	/**
+	 * 从(单例)bean池、缓存池里获取bean，并返回
+	 * 如果该bean还未被创建  返回空
+	 */
 	@Override
 	@Nullable
 	public Object getSingleton(String beanName) {
@@ -165,22 +178,31 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 	}
 
 	/**
+	 *  desc 从三级缓存中获取bean，并返回
+	 *  desc 如果该bean还未被创建  返回空
 	 * Return the (raw) singleton object registered under the given name.
 	 * <p>Checks already instantiated singletons and also allows for an early
 	 * reference to a currently created singleton (resolving a circular reference).
 	 * @param beanName the name of the bean to look for
-	 * @param allowEarlyReference whether early references should be created or not
+	 * @param allowEarlyReference whether early references should be created or not 是否允许从singletonFactories通过getObject(三级缓存)获取
 	 * @return the registered singleton object, or {@code null} if none found
 	 */
 	@Nullable
 	protected Object getSingleton(String beanName, boolean allowEarlyReference) {
+		//desc  先从singletonObjects（一级缓存）取
 		Object singletonObject = this.singletonObjects.get(beanName);
+
 		if (singletonObject == null && isSingletonCurrentlyInCreation(beanName)) {
+			//desc  取不到且创建中,那么这里使用同步锁阻塞一会,等待创建完成
 			synchronized (this.singletonObjects) {
+				//desc 同步阻塞+尝试从earlySingletonObjects(二级缓存)获取
 				singletonObject = this.earlySingletonObjects.get(beanName);
 				if (singletonObject == null && allowEarlyReference) {
+					//desc 如果二级缓存取不到&&允许从singletonFactories通过getObject获取
+					//desc 通过singletonFactory.getObject()(三级缓存)获取工厂创建该bean
 					ObjectFactory<?> singletonFactory = this.singletonFactories.get(beanName);
 					if (singletonFactory != null) {
+						//desc 通过三级缓存的Factory创建目标bean  并放入2级缓存
 						singletonObject = singletonFactory.getObject();
 						this.earlySingletonObjects.put(beanName, singletonObject);
 						this.singletonFactories.remove(beanName);
