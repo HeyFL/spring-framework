@@ -240,6 +240,7 @@ public class ProxyFactoryBean extends ProxyCreatorSupport
 
 
 	/**
+	 * 创建并返回代理类
 	 * Return a proxy. Invoked when clients obtain beans from this factory bean.
 	 * Create an instance of the AOP proxy to be returned by this factory.
 	 * The instance will be cached for a singleton, and create on each call to
@@ -249,6 +250,7 @@ public class ProxyFactoryBean extends ProxyCreatorSupport
 	@Override
 	@Nullable
 	public Object getObject() throws BeansException {
+		//生成拦截器Chain
 		initializeAdvisorChain();
 		if (isSingleton()) {
 			return getSingletonInstance();
@@ -310,6 +312,7 @@ public class ProxyFactoryBean extends ProxyCreatorSupport
 	}
 
 	/**
+	 * 返回一个单例代理
 	 * Return the singleton instance of this class's proxy object,
 	 * lazily creating it if it hasn't been created already.
 	 * @return the shared singleton proxy
@@ -425,6 +428,8 @@ public class ProxyFactoryBean extends ProxyCreatorSupport
 	}
 
 	/**
+	 * 如果被代理的是prototype类型的,那么这里会重复创建拦截器栈?
+	 * 但是以FactoryAPI的不会???
 	 * Create the advisor (interceptor) chain. Advisors that are sourced
 	 * from a BeanFactory will be refreshed each time a new prototype instance
 	 * is added. Interceptors added programmatically through the factory API
@@ -435,6 +440,7 @@ public class ProxyFactoryBean extends ProxyCreatorSupport
 			return;
 		}
 
+		//通过配置文件等设置的interceptorNames不为空
 		if (!ObjectUtils.isEmpty(this.interceptorNames)) {
 			if (this.beanFactory == null) {
 				throw new IllegalStateException("No BeanFactory available anymore (probably due to serialization) " +

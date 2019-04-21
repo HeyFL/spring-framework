@@ -270,11 +270,11 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 
 		else {
 			// Step3
-			// desc 带args参数 或 在[缓存池]里找到该bean
+			// desc 缓存里找不到  or  带args参数的 会进到这里
 
 			// Fail if we're already creating this bean instance:
 			// We're assumably within a circular reference.
-			// Step3.1 判断是否循环依赖
+			// Step3.1 判断是否存在Prototype循环依赖
 			if (isPrototypeCurrentlyInCreation(beanName)) {
 				//desc 只有在单例模式才会尝试解决循环依赖问题  如果是原型(Prototype)模式 发现有循环依赖的情况   那么这里就必须报错了
 				throw new BeanCurrentlyInCreationException(beanName);
@@ -305,6 +305,8 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 			}
 
 			if (!typeCheckOnly) {
+				//desc 标记bean为 已创建(or 创建中)
+				//   	alreadyCreated.add(beanName)
 				markBeanAsCreated(beanName);
 			}
 
@@ -412,7 +414,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 			}
 		}
 
-		// step4 类型转换,转换成目标类型
+		// step4 将初始化后的bean进行[类型转换],转换成目标类型
 		// desc 检查创建的bean类型 是否符合实际类型
 		// Check if required type matches the type of the actual bean instance.
 		if (requiredType != null && !requiredType.isInstance(bean)) {
@@ -1707,6 +1709,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 		if (mbd == null) {
 			object = getCachedObjectForFactoryBean(beanName);
 		}
+		//step3 从FactoryBean中getObject
 		if (object == null) {
 			// Return bean instance from factory.
 			FactoryBean<?> factory = (FactoryBean<?>) beanInstance;
@@ -1715,6 +1718,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 				mbd = getMergedLocalBeanDefinition(beanName);
 			}
 			boolean synthetic = (mbd != null && mbd.isSynthetic());
+			//desc
 			object = getObjectFromFactoryBean(factory, beanName, !synthetic);
 		}
 		return object;

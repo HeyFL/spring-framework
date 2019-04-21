@@ -216,6 +216,8 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 	}
 
 	/**
+	 * desc 实例化并且注册给定的beanName
+	 *
 	 * Return the (raw) singleton object registered under the given name,
 	 * creating and registering a new one if none registered yet.
 	 * @param beanName the name of the bean
@@ -225,7 +227,9 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 	 */
 	public Object getSingleton(String beanName, ObjectFactory<?> singletonFactory) {
 		Assert.notNull(beanName, "Bean name must not be null");
+		//step1 获取同步锁  进行bean实例化操作
 		synchronized (this.singletonObjects) {
+			//step1.1 双重校验 已经创建就不用再创建该bean了
 			Object singletonObject = this.singletonObjects.get(beanName);
 			if (singletonObject == null) {
 				if (this.singletonsCurrentlyInDestruction) {
@@ -236,6 +240,7 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 				if (logger.isDebugEnabled()) {
 					logger.debug("Creating shared instance of singleton bean '" + beanName + "'");
 				}
+				//step1.2 标记bean正在创建中
 				beforeSingletonCreation(beanName);
 				boolean newSingleton = false;
 				boolean recordSuppressedExceptions = (this.suppressedExceptions == null);
@@ -243,6 +248,7 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 					this.suppressedExceptions = new LinkedHashSet<>();
 				}
 				try {
+					//step1.3 调用singletonFactory.getObject()  获取bean实例
 					singletonObject = singletonFactory.getObject();
 					newSingleton = true;
 				}
@@ -266,9 +272,12 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 					if (recordSuppressedExceptions) {
 						this.suppressedExceptions = null;
 					}
+					//step1.4 取消标记bean正在创建中
 					afterSingletonCreation(beanName);
 				}
 				if (newSingleton) {
+					//step1.5 注册到bean缓存中
+					//  并删除其他辅助状态:2级缓存,单例工厂(3级缓存)
 					addSingleton(beanName, singletonObject);
 				}
 			}

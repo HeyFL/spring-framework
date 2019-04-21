@@ -1164,6 +1164,7 @@ public abstract class ClassUtils {
 	}
 
 	/**
+	 * desc 返回该类[所有(包括非公有与父类)方法名称]与[methodName]相同的个数
 	 * Return the number of methods with a given name (with any argument types),
 	 * for the given class and/or its superclasses. Includes non-public methods.
 	 * @param clazz	the clazz to check
