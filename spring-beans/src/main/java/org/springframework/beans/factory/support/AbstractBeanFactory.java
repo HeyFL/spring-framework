@@ -351,6 +351,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 					//desc 单例模式的实例化
 					sharedInstance = getSingleton(beanName, () -> {
 						try {
+							// 创建bean 这里适用❤@BeanPostProcessor 对bean进行前置.后置处理❤
 							return createBean(beanName, mbd, args);
 						}
 						catch (BeansException ex) {
@@ -361,7 +362,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 							throw ex;
 						}
 					});
-					//desc 正式初始化bean
+					//desc 获取目标bean(如果是普通bean就返回一个原封不动的bean给你  如果是FactoryBean(没有&前缀),就给你返回一个FactoryBean.getObject())
 					bean = getObjectForBeanInstance(sharedInstance, name, beanName, mbd);
 				}
 
@@ -376,7 +377,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 					finally {
 						afterPrototypeCreation(beanName);
 					}
-					//desc 正式初始化bean
+					//desc 获取目标bean(如果是普通bean就返回一个原封不动的bean给你  如果是FactoryBean(没有&前缀),就给你返回一个FactoryBean.getObject())
 					bean = getObjectForBeanInstance(prototypeInstance, name, beanName, mbd);
 				}
 
@@ -397,7 +398,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 								afterPrototypeCreation(beanName);
 							}
 						});
-						//desc 正式初始化bean
+						//desc 获取目标bean(如果是普通bean就返回一个原封不动的bean给你  如果是FactoryBean(没有&前缀),就给你返回一个FactoryBean.getObject())
 						bean = getObjectForBeanInstance(scopedInstance, name, beanName, mbd);
 					}
 					catch (IllegalStateException ex) {
@@ -1496,6 +1497,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 		}
 
 		// Resolve regularly, caching the result in the BeanDefinition...
+		//desc 利用JDK本身的反射加载类Class
 		return mbd.resolveBeanClass(beanClassLoader);
 	}
 
@@ -1673,6 +1675,10 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	}
 
 	/**
+	 * desc 获取你真正需要的bean
+	 *  1.你需要的是普通bean,那就给你返回这个bean
+	 *  	当然也可以是工厂bean本身: (MyFactoryBean) beanFactory.getBean("&myFactoryBean");
+	 *  2.你需要的是工厂bean创建的对象,那就调用该工厂bean 的getObject方法
 	 * Get the object for the given bean instance, either the bean
 	  instance itself or its created object in case of a FactoryBean.
 	 * @param beanInstance the shared bean instance
@@ -1705,11 +1711,13 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 			return beanInstance;
 		}
 
+		//step3 通过工厂bean来getObject()
 		Object object = null;
 		if (mbd == null) {
+			//step3.1 尝试从缓存(factoryBeanObjectCache)中获取
 			object = getCachedObjectForFactoryBean(beanName);
 		}
-		//step3 从FactoryBean中getObject
+		//step3.2 通过工厂生成对象[factory.getObject()]
 		if (object == null) {
 			// Return bean instance from factory.
 			FactoryBean<?> factory = (FactoryBean<?>) beanInstance;
@@ -1717,8 +1725,8 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 			if (mbd == null && containsBeanDefinition(beanName)) {
 				mbd = getMergedLocalBeanDefinition(beanName);
 			}
+			//desc 是否用户自定义-->是否需要找到bean的BeanPostProcessors对bean进行后置
 			boolean synthetic = (mbd != null && mbd.isSynthetic());
-			//desc
 			object = getObjectFromFactoryBean(factory, beanName, !synthetic);
 		}
 		return object;

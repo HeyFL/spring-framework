@@ -227,11 +227,13 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 	 */
 	public Object getSingleton(String beanName, ObjectFactory<?> singletonFactory) {
 		Assert.notNull(beanName, "Bean name must not be null");
-		//step1 获取同步锁  进行bean实例化操作
+		//step0.1 获取同步锁  进行bean实例化操作
 		synchronized (this.singletonObjects) {
-			//step1.1 双重校验 已经创建就不用再创建该bean了
+			//step0.2 双重校验 已经创建就不用再创建该bean了
 			Object singletonObject = this.singletonObjects.get(beanName);
+			//step1 创建bean
 			if (singletonObject == null) {
+				// step1.0 检查是否已经创建完成
 				if (this.singletonsCurrentlyInDestruction) {
 					throw new BeanCreationNotAllowedException(beanName,
 							"Singleton bean creation not allowed while singletons of this factory are in destruction " +
@@ -240,7 +242,7 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 				if (logger.isDebugEnabled()) {
 					logger.debug("Creating shared instance of singleton bean '" + beanName + "'");
 				}
-				//step1.2 标记bean正在创建中
+				//step1.1 创建前的前置操作 bean标记为[正在创建中]
 				beforeSingletonCreation(beanName);
 				boolean newSingleton = false;
 				boolean recordSuppressedExceptions = (this.suppressedExceptions == null);
@@ -248,19 +250,22 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 					this.suppressedExceptions = new LinkedHashSet<>();
 				}
 				try {
-					//step1.3 调用singletonFactory.getObject()  获取bean实例
+					//step1.2 正式创建bean 调用singletonFactory.getObject()  获取bean实例
+					// TODO chris 待分析?
 					singletonObject = singletonFactory.getObject();
 					newSingleton = true;
 				}
 				catch (IllegalStateException ex) {
 					// Has the singleton object implicitly appeared in the meantime ->
 					// if yes, proceed with it since the exception indicates that state.
+					// step1.2.1 已经隐式创建好了
 					singletonObject = this.singletonObjects.get(beanName);
 					if (singletonObject == null) {
 						throw ex;
 					}
 				}
 				catch (BeanCreationException ex) {
+					// step1.2.2 是否存在抑制异常  存在就组装后一口气抛出
 					if (recordSuppressedExceptions) {
 						for (Exception suppressedException : this.suppressedExceptions) {
 							ex.addRelatedCause(suppressedException);
@@ -269,14 +274,15 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 					throw ex;
 				}
 				finally {
+					// 清空抑制异常
 					if (recordSuppressedExceptions) {
 						this.suppressedExceptions = null;
 					}
-					//step1.4 取消标记bean正在创建中
+					//step1.3 清除[正在创建中]的标识
 					afterSingletonCreation(beanName);
 				}
 				if (newSingleton) {
-					//step1.5 注册到bean缓存中
+					//step1.4 注册到bean缓存中
 					//  并删除其他辅助状态:2级缓存,单例工厂(3级缓存)
 					addSingleton(beanName, singletonObject);
 				}
