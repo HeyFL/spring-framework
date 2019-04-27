@@ -496,7 +496,8 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		// Prepare method overrides.
 		try {
 			//desc 如果需要覆盖方法  初步校验是否可以进行覆盖(被覆盖的方法数>0)
-			//		PS.其中bean定义中的lockup-method 和 replace-method为被覆盖的方法
+			//	PS.其中bean定义中的lockup-method 和 replace-method为被覆盖的方法
+			//	❤这里对应@Lockup对应的方法进行扩展❤
 			mbdToUse.prepareMethodOverrides();
 		}
 		catch (BeanDefinitionValidationException ex) {
@@ -506,10 +507,12 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 
 		try {
 			// Give BeanPostProcessors a chance to return a proxy instead of the target bean instance.
-			// desc ❤@BeanPostProcessor 在这里通过创建、返回代理起效 对bean进行前置.后置处理❤
+			// desc ❤ BeanPostProcessor 在这里通过创建、返回代理起效 对bean进行前置.后置处理❤
+			//	❤Spring AOP就是通过这里实现的❤
 			Object bean = resolveBeforeInstantiation(beanName, mbdToUse);
 			if (bean != null) {
-				//如果使用了BeanPostProcessor  那就到这里结束  下面不走了
+				//desc 如果使用了BeanPostProcessor  那就到这里结束  下面不走了
+				//	使用BeanPostProcessor 会短路正常的bean创建
 				return bean;
 			}
 		}
@@ -519,7 +522,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		}
 
 		try {
-			//desc 实例化bean
+			//desc 正常实例化bean
 			Object beanInstance = doCreateBean(beanName, mbdToUse, args);
 			if (logger.isTraceEnabled()) {
 				logger.trace("Finished creating instance of bean '" + beanName + "'");

@@ -1,0 +1,8 @@
+package org.springframework.service.circular.dependency;
+
+public class TestCircularDependencyBeanImpl implements ITestCircularDependencyBean {
+	private TestCircularDependencyOtherBean testCircularDependencyOtherBean;
+	public TestCircularDependencyBeanImpl(TestCircularDependencyOtherBean testCircularDependencyOtherBean){
+		this.testCircularDependencyOtherBean = testCircularDependencyOtherBean;
+	}
+}
