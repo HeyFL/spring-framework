@@ -505,6 +505,8 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 					beanName, "Validation of method overrides failed", ex);
 		}
 
+		//step2 根据情况获取创建bean实例
+		// step2.1 如果有BeanPostProcessor应用BeanPostProcessor并返回其代理,方法到此结束
 		try {
 			// Give BeanPostProcessors a chance to return a proxy instead of the target bean instance.
 			// desc ❤ BeanPostProcessor 在这里通过创建、返回代理起效 对bean进行前置.后置处理❤
@@ -522,6 +524,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		}
 
 		try {
+			//step2.2 如果没有BeanPostProcessor能适配,那就进行正常流程实例化该bean
 			//desc 正常实例化bean
 			Object beanInstance = doCreateBean(beanName, mbdToUse, args);
 			if (logger.isTraceEnabled()) {
@@ -557,11 +560,18 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	protected Object doCreateBean(final String beanName, final RootBeanDefinition mbd, final @Nullable Object[] args)
 			throws BeanCreationException {
 
+		// step1 清除缓存 获取工厂Bean?? 如果存在工厂bean就???
 		// Instantiate the bean.
 		BeanWrapper instanceWrapper = null;
 		if (mbd.isSingleton()) {
 			instanceWrapper = this.factoryBeanInstanceCache.remove(beanName);
 		}
+		// step2 用【适当的】方式初始化该Bean  TODO Chris 里面代码待分析
+		//  1.设置了工厂方法就用工厂方法实例化
+		//  2.有多个构造函数就根据策略选择对应的构造函数
+		//  3.实在没有就用默认构造函数实例化
+		// desc 这里得到的是一个【刚初始化完】【未注入属性】的bean(等同只是实现了new Bean())
+		//  后面step5的【populateBean】才会把属性给注入进来
 		if (instanceWrapper == null) {
 			instanceWrapper = createBeanInstance(beanName, mbd, args);
 		}
@@ -575,6 +585,8 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		synchronized (mbd.postProcessingLock) {
 			if (!mbd.postProcessed) {
 				try {
+					//step3 堆初始化完的bean使用后置处理器修改Bean的定义信息
+					//desc 这里会应用所有类型为MergedBeanDefinitionPostProcessor的BeanPostProcessor
 					applyMergedBeanDefinitionPostProcessors(mbd, beanType, beanName);
 				}
 				catch (Throwable ex) {
@@ -587,6 +599,8 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 
 		// Eagerly cache singletons to be able to resolve circular references
 		// even when triggered by lifecycle interfaces like BeanFactoryAware.
+		// step4 是否需要提前曝光,需要就把该bean缓存到3级缓存  以解决循环依赖
+		//  desc 是单例 && 允许循环依赖 && 当前这个bean正在创建
 		boolean earlySingletonExposure = (mbd.isSingleton() && this.allowCircularReferences &&
 				isSingletonCurrentlyInCreation(beanName));
 		if (earlySingletonExposure) {
@@ -594,14 +608,19 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 				logger.trace("Eagerly caching bean '" + beanName +
 						"' to allow for resolving potential circular references");
 			}
-			//desc 缓存到3级缓存(作为提前暴露的前置条件)
+			//desc 缓存到3级缓存 以此提前暴露 以解决循环依赖
 			addSingletonFactory(beanName, () -> getEarlyBeanReference(beanName, mbd, bean));
 		}
 
 		// Initialize the bean instance.
 		Object exposedObject = bean;
 		try {
+			//step5 填充bean的属性(依赖注入)
 			populateBean(beanName, mbd, instanceWrapper);
+			//step6 调用初始化方法 包括:
+			// 	 *	1.应用回调方法
+			//	 *  2.调用init-method
+			//	 *  3.以及应用BeanPostProcessors对应的方法
 			exposedObject = initializeBean(beanName, exposedObject, mbd);
 		}
 		catch (Throwable ex) {
@@ -614,12 +633,15 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 			}
 		}
 
+		//step6 如果是提前暴露的bean
 		if (earlySingletonExposure) {
 			Object earlySingletonReference = getSingleton(beanName, false);
+			//desc 当前为循环依赖时 才不为空
 			if (earlySingletonReference != null) {
 				if (exposedObject == bean) {
 					exposedObject = earlySingletonReference;
 				}
+				//step6.1 如果在刚才initializeBean()里被BeanPostProcessor包装(增强)过  那这里就得
 				else if (!this.allowRawInjectionDespiteWrapping && hasDependentBean(beanName)) {
 					String[] dependentBeans = getDependentBeans(beanName);
 					Set<String> actualDependentBeans = new LinkedHashSet<>(dependentBeans.length);
@@ -944,6 +966,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	}
 
 	/**
+	 * desc 获取提前曝光的
 	 * Obtain a reference for early access to the specified bean,
 	 * typically for the purpose of resolving a circular reference.
 	 * @param beanName the name of the bean (for error handling purposes)
@@ -1145,7 +1168,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 
 	/**
 	 * Create a new instance for the specified bean, using an appropriate instantiation strategy:
-	 * factory method, constructor autowiring, or simple instantiation.
+	  factory method, constructor autowiring, or simple instantiation.
 	 * @param beanName the name of the bean
 	 * @param mbd the bean definition for the bean
 	 * @param args explicit arguments to use for constructor or factory method invocation
@@ -1751,6 +1774,9 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 
 
 	/**
+	 * desc 1.应用回调方法
+	 *  2.调用init-method
+	 *  3.以及应用BeanPostProcessors对应的方法
 	 * Initialize the given bean instance, applying factory callbacks
 	 * as well as init methods and bean post processors.
 	 * <p>Called from {@link #createBean} for traditionally defined beans,
