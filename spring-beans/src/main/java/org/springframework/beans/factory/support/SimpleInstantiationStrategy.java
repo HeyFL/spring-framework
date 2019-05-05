@@ -105,7 +105,9 @@ public class SimpleInstantiationStrategy implements InstantiationStrategy {
 	@Override
 	public Object instantiate(RootBeanDefinition bd, @Nullable String beanName, BeanFactory owner,
 			final Constructor<?> ctor, Object... args) {
-
+		//step1
+		// 	if  不存在方法覆盖(存在lockup-method 或 replaced-method动态替换的方法)
+		//	 	then 使用JDK反射初始化bean,返回
 		if (!bd.hasMethodOverrides()) {
 			if (System.getSecurityManager() != null) {
 				// use own privileged to change accessibility (when security is on)
@@ -117,6 +119,9 @@ public class SimpleInstantiationStrategy implements InstantiationStrategy {
 			return BeanUtils.instantiateClass(ctor, args);
 		}
 		else {
+			//step2
+			// 	if  存在方法覆盖
+			//	 	then 使用cglib生成该类的字节码,初始化,返回
 			return instantiateWithMethodInjection(bd, beanName, owner, ctor, args);
 		}
 	}

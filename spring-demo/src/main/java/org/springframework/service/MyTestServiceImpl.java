@@ -10,8 +10,12 @@ package org.springframework.service;
  * @since v1.0.0
  */
 public class MyTestServiceImpl implements IMyTestService {
+	private String string;
+	public MyTestServiceImpl(String string){
+		this.string = string;
+	}
     @Override
     public void sayHello() {
-        System.out.println("hello");
+        System.out.println(string+"  Hello");
     }
 }

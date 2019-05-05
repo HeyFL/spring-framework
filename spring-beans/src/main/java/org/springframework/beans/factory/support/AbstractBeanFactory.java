@@ -245,9 +245,10 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 
 		// Eagerly check singleton cache for manually registered singletons.
 		/**
-		 * desc Step1 检查缓存中/实例工厂里是否有对应的实例
-		 * 	what: 用作解决循环[单例]的依赖
-		 * 	How: spring 创建bena时会将创建bean的ObjectFactory提前曝光,
+		 *  Step1 检查缓存中/实例工厂里是否有对应的实例
+		 * 	desc
+		 * 	 what: ☆ 用作解决循环[单例]的依赖 ☆
+		 * 	 How: spring 创建bena时会将创建bean的ObjectFactory提前曝光,
 		 * 		一旦后面创建的bean依赖这个bean的时候,直接使用这个(三级缓存)ObjectFactory.getBean
 		 * 		并且把它提到earlySingletonObjects(二级缓存)中
 		 */

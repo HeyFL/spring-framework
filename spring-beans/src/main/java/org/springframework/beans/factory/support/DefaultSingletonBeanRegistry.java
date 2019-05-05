@@ -249,7 +249,7 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 					logger.debug("Creating shared instance of singleton bean '" + beanName + "'");
 				}
 				//step1.1 创建前的前置操作 bean标记为[正在创建中]
-				//  desc 如果出现这里【构造注入版】的【循环依赖】这里会报错
+				//  desc ☆ 如果出现这里【构造注入版】的【循环依赖】这里会报错 ☆
 				beforeSingletonCreation(beanName);
 				boolean newSingleton = false;
 				boolean recordSuppressedExceptions = (this.suppressedExceptions == null);

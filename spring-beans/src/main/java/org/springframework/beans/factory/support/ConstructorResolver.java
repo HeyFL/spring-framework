@@ -101,6 +101,7 @@ class ConstructorResolver {
 
 
 	/**
+	 * desc 这里看HeightLight就行了
 	 * "autowire constructor" (with constructor arguments by type) behavior.
 	 * Also applied if explicit constructor argument values are specified,
 	 * matching all remaining arguments with beans from the bean factory.
@@ -160,6 +161,7 @@ class ConstructorResolver {
 				}
 			}
 
+			//desc 只有一个构造方法且不存在参数时直接使用默认构造方法
 			if (candidates.length == 1 && explicitArgs == null && !mbd.hasConstructorArgumentValues()) {
 				Constructor<?> uniqueCandidate = candidates[0];
 				if (uniqueCandidate.getParameterCount() == 0) {
@@ -168,6 +170,7 @@ class ConstructorResolver {
 						mbd.constructorArgumentsResolved = true;
 						mbd.resolvedConstructorArguments = EMPTY_ARGS;
 					}
+					// HeightLight 初始化核心方法1
 					bw.setBeanInstance(instantiate(beanName, mbd, uniqueCandidate, EMPTY_ARGS));
 					return bw;
 				}
@@ -282,14 +285,31 @@ class ConstructorResolver {
 		}
 
 		Assert.state(argsToUse != null, "Unresolved constructor arguments");
+		// HeightLight 初始化核心方法2
 		bw.setBeanInstance(instantiate(beanName, mbd, constructorToUse, argsToUse));
 		return bw;
 	}
 
+	/**
+	 * desc 根据不同策略进行Bean的初始化(策略: 使用JDK反射机制还是使用cglib)
+	 * 	HeightLight
+	 * 		if 类存在覆盖(存在lookup-method 或 replaced-method动态替换的方法)
+	 * 			then 那就使用cglib创建该类的字节码,初始化后,返回
+	 * 		else
+	 * 			使用JDK反射,初始化后,返回
+	 *
+	 * @param beanName
+	 * @param mbd
+	 * @param constructorToUse
+	 * @param argsToUse
+	 * @return
+	 */
 	private Object instantiate(
 			String beanName, RootBeanDefinition mbd, Constructor constructorToUse, Object[] argsToUse) {
-
+		//step1 只有一个动作  调用CglibSubclassingInstantiationStrategy.instantiate方法
 		try {
+			//desc 这里只有一种策略: CglibSubclassingInstantiationStrategy
+			//	在这个策略里面才会判断是使用JDK反射还是cglib进行初始化...不懂这名字为啥要这么起
 			InstantiationStrategy strategy = this.beanFactory.getInstantiationStrategy();
 			if (System.getSecurityManager() != null) {
 				return AccessController.doPrivileged((PrivilegedAction<Object>) () ->
