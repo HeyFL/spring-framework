@@ -519,15 +519,19 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	@Override
 	public void refresh() throws BeansException, IllegalStateException {
 		synchronized (this.startupShutdownMonitor) {
+			//step1 准备刷新上下文
 			//1.初始化容器各种配置(启动时间  事件监听器 事件广播器等)
 			//2.验证配置信息的正确性
 			// Prepare this context for refreshing.
 			prepareRefresh();
 
+			//step2. 重新造一个BeanFactory
+			//step2.1 读取Xml文件,初始化新的BeanFactory
 			//创建、返回一个全新的beanFactory  销毁原有的bean
 			// Tell the subclass to refresh the internal bean factory.
 			ConfigurableListableBeanFactory beanFactory = obtainFreshBeanFactory();
 
+			//step2.2 对BeanFactory本身进行属性填充
 			//添加一些 Spring 本身需要的一些工具类 如类加载器/构建bean时的前置处理器(BeanPostProcessor)等
 			// Prepare the bean factory for use in this context.
 			prepareBeanFactory(beanFactory);
@@ -535,12 +539,13 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 			try {
 				//★★★用户扩展Start:★★★
 				// 下面2行代码为BeanFactory进行扩展
+				// step2.3 对BeanFactory进一步加工处理(给子类做扩展用)
 				// 1.让子类决定  对已经构建的 BeanFactory 后置配置修改,为创建出能适应不同场合下的BeanFactory
 				// webApplicationContext就是在这里添加了对web请求相关的BeanPostProcessor
 				// Allows post-processing of the bean factory in context subclasses.
 				postProcessBeanFactory(beanFactory);
 
-				//2.1.对BeanFactory后置处理-->找到并调用BeanDefinitionRegistryPostProcessors/BeanFactoryPostProcessor 接口实现
+				//2.1.对BeanFactory后置处理2-->找到并调用BeanDefinitionRegistryPostProcessors/BeanFactoryPostProcessor 接口实现
 				//2.2 添加临时类处理器
 				// Invoke factory processors registered as beans in the context.
 				invokeBeanFactoryPostProcessors(beanFactory);
@@ -577,6 +582,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 				//★★★绑定监听器End:★★★
 
 
+				//step6. 创建所有非懒加载的Bean (调用getBean流程)
 				//实例化BeanFactory中已经被注册(解析成beanDefinitionNames的) 但是未实例化的所有实例  也就是加载->实例化的过程
 				//PS.BeanPostProcessor在这里起效(Bean初始化前后)
 				// Instantiate all remaining (non-lazy-init) singletons.
@@ -742,7 +748,8 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	 * <p>Must be called before singleton instantiation.
 	 */
 	protected void invokeBeanFactoryPostProcessors(ConfigurableListableBeanFactory beanFactory) {
-		//对BeanFactory后置处理-->找到并调用BeanDefinitionRegistryPostProcessors/BeanFactoryPostProcessor 接口实现
+		//对BeanFactory后置处理2
+		// 找到并调用BeanDefinitionRegistryPostProcessors/BeanFactoryPostProcessor 接口实现
 		PostProcessorRegistrationDelegate.invokeBeanFactoryPostProcessors(beanFactory, getBeanFactoryPostProcessors());
 
 		// Detect a LoadTimeWeaver and prepare for weaving, if found in the meantime

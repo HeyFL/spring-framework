@@ -5,6 +5,7 @@ dependencies {
 	compile(project(":spring-core"))
 
 	compile(project(":spring-beans"))
+	compile(project(":spring-context"))
 }
 
 tasks.withType(JavaCompile) {

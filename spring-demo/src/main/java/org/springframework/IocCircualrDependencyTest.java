@@ -1,5 +1,6 @@
 package org.springframework;
 
+//import org.springframework.beans.factory.xml.XmlBeanFactory;
 import org.springframework.beans.factory.xml.XmlBeanFactory;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.service.IMyTestService;
