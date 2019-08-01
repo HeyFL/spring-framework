@@ -6,6 +6,8 @@ dependencies {
 
 	compile(project(":spring-beans"))
 	compile(project(":spring-context"))
+	compile(project(":spring-aop"))
+	compile("org.aspectj:aspectjweaver:${aspectjVersion}")
 }
 
 tasks.withType(JavaCompile) {

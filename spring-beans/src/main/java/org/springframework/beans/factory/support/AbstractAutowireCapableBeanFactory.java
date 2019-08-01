@@ -426,6 +426,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 
 		Object result = existingBean;
 		for (BeanPostProcessor processor : getBeanPostProcessors()) {
+			//AOP再次生效   实现类:org.springframework.aop.framework.autoproxy.AbstractAutoProxyCreator.postProcessAfterInitialization
 			Object current = processor.postProcessAfterInitialization(result, beanName);
 			if (current == null) {
 				return result;
