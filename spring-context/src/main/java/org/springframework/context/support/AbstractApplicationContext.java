@@ -557,6 +557,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 				//	BeanPostProcessor定义了两个方法,主要是为所有bean[创建]前后统一进行一些处理
 				// 	1.postProcessBeforeInitialization感
 				// 	2.postProcessAfterInitialization
+				//	*AOP* 在这里注册BeanPostProcessors
 				// Register bean processors that intercept bean creation.
 				registerBeanPostProcessors(beanFactory);
 				//★★★用户扩展End:★★★

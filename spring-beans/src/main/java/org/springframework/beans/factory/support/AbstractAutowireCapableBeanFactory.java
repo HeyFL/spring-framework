@@ -426,7 +426,10 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 
 		Object result = existingBean;
 		for (BeanPostProcessor processor : getBeanPostProcessors()) {
-			//AOP再次生效   实现类:org.springframework.aop.framework.autoproxy.AbstractAutoProxyCreator.postProcessAfterInitialization
+			//*AOP*
+			//desc AOP正式生效 生成代理、移花接木
+			// 经过这里  bean(可能)变为被代理的bean  实现了偷梁换柱
+			// 实现类:org.springframework.aop.framework.autoproxy.AbstractAutoProxyCreator.postProcessAfterInitialization
 			Object current = processor.postProcessAfterInitialization(result, beanName);
 			if (current == null) {
 				return result;
@@ -511,7 +514,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		try {
 			// Give BeanPostProcessors a chance to return a proxy instead of the target bean instance.
 			// desc ❤ BeanPostProcessor 在这里通过创建、返回代理起效 对bean进行前置.后置处理❤
-			//	❤Spring AOP就是通过这里实现的❤
+			//	❤Spring AOP就是通过这里实现的❤ *AOP*
 			Object bean = resolveBeforeInstantiation(beanName, mbdToUse);
 			if (bean != null) {
 				//desc 如果使用了BeanPostProcessor  那就到这里结束  下面不走了
@@ -1865,7 +1868,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 					beanName, "Invocation of init method failed", ex);
 		}
 		if (mbd == null || !mbd.isSynthetic()) {
-			//step4 调用BeanPostProcessors的【后置】处理
+			//step4 调用BeanPostProcessors的【后置】处理 *AOP代理在此创建*
 			wrappedBean = applyBeanPostProcessorsAfterInitialization(wrappedBean, beanName);
 		}
 

@@ -7,5 +7,7 @@
 	</bean>
 	<bean class="org.springframework.service.AspectTest">
 	</bean>
+	<bean class="org.springframework.service.AspectTest2">
+	</bean>
 	<aop:aspectj-autoproxy/>
 </beans>

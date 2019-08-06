@@ -7,4 +7,5 @@ package org.springframework.service;
  */
 public interface IMyTestService {
     void sayHello();
+    void sayHello2();
 }

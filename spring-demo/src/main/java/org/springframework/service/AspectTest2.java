@@ -5,7 +5,6 @@
 package org.springframework.service;
 
 
-import org.aspectj.lang.annotation.After;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.annotation.Pointcut;
@@ -16,17 +15,13 @@ import org.aspectj.lang.annotation.Pointcut;
  * @since v1.0.0
  */
 @Aspect
-public class AspectTest {
-	@Pointcut("execution(* sayHello())")
+public class AspectTest2 {
+	@Pointcut("execution(* sayHello2())")
 	private void pointcut(){
 
 	}
 	@Before("pointcut()")
 	public void before(){
-		System.out.println("===========方法前===========");
-	}
-	@After("pointcut()")
-	public void after(){
-		System.out.println("===========方法后===========");
+		System.out.println("===========方法前2===========");
 	}
 }

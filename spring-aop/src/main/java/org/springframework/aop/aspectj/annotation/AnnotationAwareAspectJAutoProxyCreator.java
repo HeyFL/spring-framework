@@ -28,6 +28,10 @@ import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
 /**
+ * desc 初始化&注册AnnotationAwareAspectJAutoProxyCreator到Spring中
+ * 	作为创建代理增强的工厂  通过↓↓↓
+ * 	{@link org.springframework.aop.framework.autoproxy.AbstractAutoProxyCreator#postProcessAfterInitialization(java.lang.Object, java.lang.String)}
+ * 	来实现
  * {@link AspectJAwareAdvisorAutoProxyCreator} subclass that processes all AspectJ
  * annotation aspects in the current application context, as well as Spring Advisors.
  *

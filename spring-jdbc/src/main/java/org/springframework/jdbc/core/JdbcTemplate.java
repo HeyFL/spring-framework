@@ -53,6 +53,9 @@ import org.springframework.util.LinkedCaseInsensitiveMap;
 import org.springframework.util.StringUtils;
 
 /**
+ * desc Spring数据库操作的基本类
+ *  Mybatis等工具都是通过这个来初始化数据源、执行部分SQL
+ *
  * <b>This is the central class in the JDBC core package.</b>
  * It simplifies the use of JDBC and helps to avoid common errors.
  * It executes core JDBC workflow, leaving application code to provide SQL
@@ -161,6 +164,7 @@ public class JdbcTemplate extends JdbcAccessor implements JdbcOperations {
 	 * @param dataSource the JDBC DataSource to obtain connections from
 	 */
 	public JdbcTemplate(DataSource dataSource) {
+		//初始化数据源
 		setDataSource(dataSource);
 		afterPropertiesSet();
 	}

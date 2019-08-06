@@ -190,6 +190,7 @@ public class AspectJProxyFactory extends ProxyCreatorSupport {
 	 */
 	@SuppressWarnings("unchecked")
 	public <T> T getProxy() {
+		//desc 创建&获取AOP代理   根据情况使用JDK/Cglib创建代理  *AOP*
 		return (T) createAopProxy().getProxy();
 	}
 
