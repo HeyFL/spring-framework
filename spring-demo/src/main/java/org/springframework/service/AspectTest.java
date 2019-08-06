@@ -9,6 +9,7 @@ import org.aspectj.lang.annotation.After;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.annotation.Pointcut;
+import org.springframework.core.annotation.Order;
 
 /**
  * @author caizq
@@ -16,6 +17,7 @@ import org.aspectj.lang.annotation.Pointcut;
  * @since v1.0.0
  */
 @Aspect
+@Order(9)
 public class AspectTest {
 	@Pointcut("execution(* sayHello())")
 	private void pointcut(){

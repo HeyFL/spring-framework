@@ -8,6 +8,7 @@ package org.springframework.service;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.annotation.Pointcut;
+import org.springframework.core.annotation.Order;
 
 /**
  * @author caizq
@@ -15,6 +16,7 @@ import org.aspectj.lang.annotation.Pointcut;
  * @since v1.0.0
  */
 @Aspect
+@Order(1)
 public class AspectTest2 {
 	@Pointcut("execution(* sayHello2())")
 	private void pointcut(){

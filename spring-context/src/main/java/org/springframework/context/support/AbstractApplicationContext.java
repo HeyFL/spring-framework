@@ -527,6 +527,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 
 			//step2. 重新造一个BeanFactory
 			//step2.1 读取Xml文件,初始化新的【基本的】BeanFactory
+			//desc 在这里重新加载bean定义(*AOP*的AnnotationAwareAspectJAutoProxyCreator就是在这里读取自身配置的)
 			//创建、返回一个全新的beanFactory  销毁原有的bean
 			// Tell the subclass to refresh the internal bean factory.
 			ConfigurableListableBeanFactory beanFactory = obtainFreshBeanFactory();
