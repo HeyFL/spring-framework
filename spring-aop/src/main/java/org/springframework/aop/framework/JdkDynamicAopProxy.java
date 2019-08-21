@@ -161,7 +161,7 @@ final class JdkDynamicAopProxy implements AopProxy, InvocationHandler, Serializa
 
 		TargetSource targetSource = this.advised.targetSource;
 		Object target = null;
-
+		//step1 如果不用增强就直接调用目标方法
 		try {
 			//被代理对象没有实现Equals方法  就不对其进行增强
 			if (!this.equalsDefined && AopUtils.isEqualsMethod(method)) {
@@ -193,16 +193,19 @@ final class JdkDynamicAopProxy implements AopProxy, InvocationHandler, Serializa
 
 			// Get as late as possible to minimize the time we "own" the target,
 			// in case it comes from a pool.
+			//desc 获取目标(如果需要会获取锁)
+			// ❤如果是prototype这里会创建Bean❤
 			target = targetSource.getTarget();
 			Class<?> targetClass = (target != null ? target.getClass() : null);
 
 			// Get the interception chain for this method.
-			//desc 获取调用链 从队尾开始遍历执行  *AOP*
+			//step2 获取增强调用链 从头开始遍历执行(先调用after)  *AOP*
 			List<Object> chain = this.advised.getInterceptorsAndDynamicInterceptionAdvice(method, targetClass);
 
 			// Check whether we have any advice. If we don't, we can fallback on direct
 			// reflective invocation of the target, and avoid creating a MethodInvocation.
 			if (chain.isEmpty()) {
+				// desc 不需要增强,直接调用
 				// We can skip creating a MethodInvocation: just invoke the target directly
 				// Note that the final invoker must be an InvokerInterceptor so we know it does
 				// nothing but a reflective operation on the target, and no hot swapping or fancy proxying.
@@ -210,12 +213,14 @@ final class JdkDynamicAopProxy implements AopProxy, InvocationHandler, Serializa
 				retVal = AopUtils.invokeJoinpointUsingReflection(target, method, argsToUse);
 			}
 			else {
+				// step3 需要增强就创建一个invocation进行增强调用
 				// We need to create a method invocation...
 				invocation = new ReflectiveMethodInvocation(proxy, target, method, args, targetClass, chain);
 				// Proceed to the joinpoint through the interceptor chain.
 				retVal = invocation.proceed();
 			}
 
+			// step4 返回增强调用后的结果
 			// Massage return value if necessary.
 			Class<?> returnType = method.getReturnType();
 			if (retVal != null && retVal == target &&
@@ -235,6 +240,8 @@ final class JdkDynamicAopProxy implements AopProxy, InvocationHandler, Serializa
 		finally {
 			if (target != null && !targetSource.isStatic()) {
 				// Must have come from TargetSource.
+				//desc 释放目标(如果需要会释放锁)
+				//❤prototype在这里销毁对象❤
 				targetSource.releaseTarget(target);
 			}
 			if (setProxyContext) {

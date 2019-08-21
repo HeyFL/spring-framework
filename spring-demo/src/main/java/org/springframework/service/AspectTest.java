@@ -5,10 +5,8 @@
 package org.springframework.service;
 
 
-import org.aspectj.lang.annotation.After;
-import org.aspectj.lang.annotation.Aspect;
-import org.aspectj.lang.annotation.Before;
-import org.aspectj.lang.annotation.Pointcut;
+import org.aspectj.lang.ProceedingJoinPoint;
+import org.aspectj.lang.annotation.*;
 import org.springframework.core.annotation.Order;
 
 /**
@@ -24,11 +22,23 @@ public class AspectTest {
 
 	}
 	@Before("pointcut()")
-	public void before(){
+	public void beforeTest(){
 		System.out.println("===========方法前===========");
 	}
 	@After("pointcut()")
-	public void after(){
+	public void afterTest(){
 		System.out.println("===========方法后===========");
+	}
+	@Around("pointcut()")
+	public Object aroundTest(ProceedingJoinPoint proceedingJoinPoint){
+		System.out.println("=========beforeSubTest==========");
+		Object o = null;
+		try {
+			o = proceedingJoinPoint.proceed();
+		} catch (Throwable throwable) {
+			throwable.printStackTrace();
+		}
+		System.out.println("=========afterSubTest==========");
+		return o;
 	}
 }
