@@ -317,6 +317,9 @@ public abstract class TransactionAspectSupport implements BeanFactoryAware, Init
 				cleanupTransactionInfo(txInfo);
 			}
 
+			//desc 异常情况: 如果在同一个事务内,嵌套的子事务(非newTransaction)处理完后,被捕获&没抛出  会执行以下的逻辑
+			//	★这也是为什么有时候会报"Transaction rolled back because it has been marked as rollback-only"★
+
 			//step3.1.4 如果特别要求回滚,那就回滚,否则提交事务
 			if (vavrPresent && VavrDelegate.isVavrTry(retVal)) {
 				// Set rollback-only in case of Vavr failure matching our rollback rules...
@@ -325,7 +328,7 @@ public abstract class TransactionAspectSupport implements BeanFactoryAware, Init
 					retVal = VavrDelegate.evaluateTryFailure(retVal, txAttr, status);
 				}
 			}
-			//提交事务
+			//step3.1.5 提交事务(如果是rollbackOnly 会被回滚)
 			commitTransactionAfterReturning(txInfo);
 			return retVal;
 		}
@@ -587,7 +590,7 @@ public abstract class TransactionAspectSupport implements BeanFactoryAware, Init
 			if (txInfo.transactionAttribute != null && txInfo.transactionAttribute.rollbackOn(ex)) {
 				//step1 当前异常需要进行事务回滚
 				try {
-					//step1.1 进行回滚
+					//step1.1 ❤进行回滚❤
 					txInfo.getTransactionManager().rollback(txInfo.getTransactionStatus());
 				}
 				catch (TransactionSystemException ex2) {
