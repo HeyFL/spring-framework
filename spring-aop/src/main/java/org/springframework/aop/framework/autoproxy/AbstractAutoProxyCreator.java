@@ -296,7 +296,7 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 		if (bean != null) {
 			Object cacheKey = getCacheKey(bean.getClass(), beanName);
 			if (this.earlyProxyReferences.remove(cacheKey) != bean) {
-				//如果该Bean需要被代理  则对其包装
+				//如果该Bean需要被代理  则对其包装 将普通bean替换为代理
 				return wrapIfNecessary(bean, beanName, cacheKey);
 			}
 		}
@@ -348,11 +348,14 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 		}
 
 		// Create proxy if we have advice.
-		//desc 创建代理 增强目标类
+		//step2 创建代理 增强目标类
+		//step2.1 找到所有可应用到bean的『增强』(包括class & method的)
 		Object[] specificInterceptors = getAdvicesAndAdvisorsForBean(bean.getClass(), beanName, null);
 		if (specificInterceptors != DO_NOT_PROXY) {
+			//step2.2 需要增强
 			this.advisedBeans.put(cacheKey, Boolean.TRUE);
 			//desc 创建代理
+			//step2.3 创建代理 & 将所有找到的增强(specificInterceptors)注册进去
 			Object proxy = createProxy(
 					bean.getClass(), beanName, specificInterceptors, new SingletonTargetSource(bean));
 			this.proxyTypes.put(cacheKey, proxy.getClass());
@@ -464,6 +467,7 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 			}
 		}
 
+		//desc 注册增强(包括class & method的)
 		Advisor[] advisors = buildAdvisors(beanName, specificInterceptors);
 		proxyFactory.addAdvisors(advisors);
 		proxyFactory.setTargetSource(targetSource);

@@ -55,12 +55,20 @@ public class ArgumentTypePreparedStatementSetter implements PreparedStatementSet
 	}
 
 
+	/**
+	 * 	desc 解析每个参数的类型  以便执行sql
+	 * @param ps the PreparedStatement to invoke setter methods on
+	 * @throws SQLException
+	 */
 	@Override
 	public void setValues(PreparedStatement ps) throws SQLException {
+
 		int parameterPosition = 1;
 		if (this.args != null && this.argTypes != null) {
+			//desc 解析每个参数的类型
 			for (int i = 0; i < this.args.length; i++) {
 				Object arg = this.args[i];
+				//desc 如果参数本身就是个集合,那还得进入这个参数内进行解析
 				if (arg instanceof Collection && this.argTypes[i] != Types.ARRAY) {
 					Collection<?> entries = (Collection<?>) arg;
 					for (Object entry : entries) {

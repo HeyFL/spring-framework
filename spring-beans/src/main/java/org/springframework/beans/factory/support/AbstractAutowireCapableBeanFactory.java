@@ -1141,6 +1141,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 					//生成BeanPostProcessor代理类
 					bean = applyBeanPostProcessorsBeforeInstantiation(targetType, beanName);
 					if (bean != null) {
+						//desc AOP在这里生效,把bean替换成代理
 						bean = applyBeanPostProcessorsAfterInitialization(bean, beanName);
 					}
 				}

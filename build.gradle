@@ -66,6 +66,13 @@ configure(allprojects) { project ->
 	apply plugin: "io.spring.dependency-management"
 	apply from: "${gradleScriptDir}/ide.gradle"
 
+	gradle.projectsEvaluated {
+		tasks.withType(JavaCompile) {
+			options.compilerArgs << '-Xlint:none'
+			options.compilerArgs << '-nowarn' // same as '-Xlint:none'
+			options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
+		}
+	}
 	dependencyManagement {
 		resolutionStrategy {
 			cacheChangingModulesFor 0, "seconds"

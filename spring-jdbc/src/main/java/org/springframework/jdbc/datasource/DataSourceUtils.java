@@ -99,9 +99,13 @@ public abstract class DataSourceUtils {
 	 */
 	public static Connection doGetConnection(DataSource dataSource) throws SQLException {
 		Assert.notNull(dataSource, "No DataSource specified");
+		//desc 注:只有需要支持事务的线程才会创建ConnectionHolder并且与绑定线程
 
+		//step1 当前线程是否已经有连接&ConnectionHolder-->已有连接就返回  没有就创建并返回
+		//desc 获取当前线程的ConnectionHolder
 		ConnectionHolder conHolder = (ConnectionHolder) TransactionSynchronizationManager.getResource(dataSource);
 		if (conHolder != null && (conHolder.hasConnection() || conHolder.isSynchronizedWithTransaction())) {
+
 			conHolder.requested();
 			if (!conHolder.hasConnection()) {
 				logger.debug("Fetching resumed JDBC Connection from DataSource");
@@ -111,9 +115,11 @@ public abstract class DataSourceUtils {
 		}
 		// Else we either got no holder or an empty thread-bound holder here.
 
+		//step2 没有ConnectionHolder||非事务同步连接的情况-->创建ConnectionHolder&连接
 		logger.debug("Fetching JDBC Connection from DataSource");
 		Connection con = fetchConnection(dataSource);
 
+		//desc 当前线程支持同步
 		if (TransactionSynchronizationManager.isSynchronizationActive()) {
 			try {
 				// Use same Connection for further JDBC actions within the transaction.
@@ -130,6 +136,7 @@ public abstract class DataSourceUtils {
 						new ConnectionSynchronization(holderToUse, dataSource));
 				holderToUse.setSynchronizedWithTransaction(true);
 				if (holderToUse != conHolder) {
+					//desc 建立线程与连接关系
 					TransactionSynchronizationManager.bindResource(dataSource, holderToUse);
 				}
 			}
@@ -140,6 +147,7 @@ public abstract class DataSourceUtils {
 			}
 		}
 
+		//step3 返回连接
 		return con;
 	}
 

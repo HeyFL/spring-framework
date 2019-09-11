@@ -612,12 +612,19 @@ public class JdbcTemplate extends JdbcAccessor implements JdbcOperations {
 			logger.debug("Executing prepared SQL statement" + (sql != null ? " [" + sql + "]" : ""));
 		}
 
+		//step1 获取连接
 		Connection con = DataSourceUtils.getConnection(obtainDataSource());
 		PreparedStatement ps = null;
 		try {
 			ps = psc.createPreparedStatement(con);
+			//step2 设置执行参数  (每次执行sql都会设置一次这些参数...)
+			// 1.包括每次读几条数据
+			// 2.最多返回多少行数据
+			// 3.超时时间Ω
 			applyStatementSettings(ps);
+			//step3 执行
 			T result = action.doInPreparedStatement(ps);
+			//step4 打印警告日志
 			handleWarnings(ps);
 			return result;
 		}
@@ -636,6 +643,8 @@ public class JdbcTemplate extends JdbcAccessor implements JdbcOperations {
 			throw translateException("PreparedStatementCallback", sql, ex);
 		}
 		finally {
+			//step5 关闭流 回收连接
+			//desc 注: 如果当前线程存在事务,不会真正释放连接
 			if (psc instanceof ParameterDisposer) {
 				((ParameterDisposer) psc).cleanupParameters();
 			}
@@ -679,6 +688,7 @@ public class JdbcTemplate extends JdbcAccessor implements JdbcOperations {
 						pss.setValues(ps);
 					}
 					rs = ps.executeQuery();
+					//desc 封装成对象返回
 					return rse.extractData(rs);
 				}
 				finally {
@@ -863,8 +873,10 @@ public class JdbcTemplate extends JdbcAccessor implements JdbcOperations {
 		logger.debug("Executing prepared SQL update");
 
 		return updateCount(execute(psc, ps -> {
+			//desc execute的回调:
 			try {
 				if (pss != null) {
+					//desc 解析每个参数的类型  以便执行sql
 					pss.setValues(ps);
 				}
 				int rows = ps.executeUpdate();
@@ -1366,12 +1378,15 @@ public class JdbcTemplate extends JdbcAccessor implements JdbcOperations {
 	protected void applyStatementSettings(Statement stmt) throws SQLException {
 		int fetchSize = getFetchSize();
 		if (fetchSize != -1) {
+			//step1 每次在服务器『一次性』读多少条数据  减少网络交互
 			stmt.setFetchSize(fetchSize);
 		}
 		int maxRows = getMaxRows();
 		if (maxRows != -1) {
+			//step2 最多返回的数据行数
 			stmt.setMaxRows(maxRows);
 		}
+		//step3 设置超时时间
 		DataSourceUtils.applyTimeout(stmt, getDataSource(), getQueryTimeout());
 	}
 
