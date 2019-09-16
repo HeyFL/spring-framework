@@ -526,6 +526,7 @@ public abstract class FrameworkServlet extends HttpServletBean implements Applic
 		long startTime = System.currentTimeMillis();
 
 		try {
+			//desc 创建/刷新 一个与DispatcherServlet相关的webApplicationContext
 			this.webApplicationContext = initWebApplicationContext();
 			initFrameworkServlet();
 		}
@@ -548,6 +549,7 @@ public abstract class FrameworkServlet extends HttpServletBean implements Applic
 	}
 
 	/**
+	 * desc 为servlet获取一个与DispatcherServlet相关的子webApplicationContext
 	 * Initialize and publish the WebApplicationContext for this servlet.
 	 * <p>Delegates to {@link #createWebApplicationContext} for actual creation
 	 * of the context. Can be overridden in subclasses.
@@ -557,10 +559,13 @@ public abstract class FrameworkServlet extends HttpServletBean implements Applic
 	 * @see #setContextConfigLocation
 	 */
 	protected WebApplicationContext initWebApplicationContext() {
+		//step1 获取根上下文对象
+		// 如果我们在web.xml配置了Spring的ContextLoaderListener,这里会得到其创建的上下文对象
 		WebApplicationContext rootContext =
 				WebApplicationContextUtils.getWebApplicationContext(getServletContext());
 		WebApplicationContext wac = null;
 
+		//step2 如果本DispatcherServlet所持有的上下文已经存在(在构造函数中注入的),直接使用
 		if (this.webApplicationContext != null) {
 			// A context instance was injected at construction time -> use it
 			wac = this.webApplicationContext;
@@ -572,24 +577,36 @@ public abstract class FrameworkServlet extends HttpServletBean implements Applic
 					if (cwac.getParent() == null) {
 						// The context instance was injected without an explicit parent -> set
 						// the root application context (if any; may be null) as the parent
+						//desc 将根上下文设置为父上下文
 						cwac.setParent(rootContext);
 					}
+					//desc 刷新这个"新的"子WebApplicationContext
 					configureAndRefreshWebApplicationContext(cwac);
 				}
 			}
 		}
+		//step3 已经创建过了
 		if (wac == null) {
 			// No context instance was injected at construction time -> see if one
 			// has been registered in the servlet context. If one exists, it is assumed
 			// that the parent context (if any) has already been set and that the
 			// user has performed any initialization such as setting the context id
+			// desc
+			//  如果在构造函数中没有注入上下文对象，查找ServletContext中是否已经注册了一个与本Servlet相关的上下文对象,
+			//  如果可以得到一个上下文对象,则说明其已经设置了父上下文对象及已经初始化完成
 			wac = findWebApplicationContext();
 		}
+
+		//step4 还没创建过
 		if (wac == null) {
 			// No context instance is defined for this servlet -> create a local one
+			//desc 通过上面两种方式都找不到,那就自己创建一个WebApplicationContext
 			wac = createWebApplicationContext(rootContext);
 		}
 
+		//step5 调用servlet的onRefrsh方法
+		// 默认实现:DispatcherServlet#onRefresh  执行其初始化策略:
+		//  --> desc 主要是初始化各种Servlet组件  如:国际化,HandlerMappings等
 		if (!this.refreshEventReceived) {
 			// Either the context is not a ConfigurableApplicationContext with refresh
 			// support or the context injected at construction time had already been
@@ -599,8 +616,10 @@ public abstract class FrameworkServlet extends HttpServletBean implements Applic
 			}
 		}
 
+		//step6 把这个子WebApplicationContext放到ServletContext中
 		if (this.publishContext) {
 			// Publish the context as a servlet context attribute.
+			// desc 把当前获取或者建议的上下文对象保存到ServletContext中,使用的索引与当前Servlet名有关
 			String attrName = getServletContextAttributeName();
 			getServletContext().setAttribute(attrName, wac);
 		}

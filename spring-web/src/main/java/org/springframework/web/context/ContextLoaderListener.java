@@ -96,6 +96,7 @@ public class ContextLoaderListener extends ContextLoader implements ServletConte
 
 
 	/**
+	 * ❤Spring MVC入口❤
 	 * Initialize the root web application context.
 	 */
 	@Override

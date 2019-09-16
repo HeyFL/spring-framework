@@ -139,6 +139,7 @@ public abstract class HttpServletBean extends HttpServlet implements Environment
 	}
 
 	/**
+	 *
 	 * Map config parameters onto bean properties of this servlet, and
 	 * invoke subclass initialization.
 	 * @throws ServletException if bean properties are invalid (or required
@@ -148,13 +149,16 @@ public abstract class HttpServletBean extends HttpServlet implements Environment
 	public final void init() throws ServletException {
 
 		// Set bean properties from init parameters.
+		//desc 构造PropertyValues 并且验证必要字段
 		PropertyValues pvs = new ServletConfigPropertyValues(getServletConfig(), this.requiredProperties);
 		if (!pvs.isEmpty()) {
 			try {
 				BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(this);
 				ResourceLoader resourceLoader = new ServletContextResourceLoader(getServletContext());
 				bw.registerCustomEditor(Resource.class, new ResourceEditor(resourceLoader, getEnvironment()));
+				//留作子类扩展
 				initBeanWrapper(bw);
+				//desc 通过Spring注入属性到DispatcherServlet中
 				bw.setPropertyValues(pvs, true);
 			}
 			catch (BeansException ex) {
@@ -165,6 +169,7 @@ public abstract class HttpServletBean extends HttpServlet implements Environment
 			}
 		}
 
+		// desc 留作子类扩展 SpringMVC默认实现为org.springframework.web.servlet.FrameworkServlet.initServletBean
 		// Let subclasses do whatever initialization they like.
 		initServletBean();
 	}
@@ -211,7 +216,7 @@ public abstract class HttpServletBean extends HttpServlet implements Environment
 		 * Create new ServletConfigPropertyValues.
 		 * @param config the ServletConfig we'll use to take PropertyValues from
 		 * @param requiredProperties set of property names we need, where
-		 * we can't accept default values
+		 * we can't accept default values  desc (需要验证的非空字段)
 		 * @throws ServletException if any required properties are missing
 		 */
 		public ServletConfigPropertyValues(ServletConfig config, Set<String> requiredProperties)

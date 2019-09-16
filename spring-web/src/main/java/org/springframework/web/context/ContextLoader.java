@@ -247,6 +247,7 @@ public class ContextLoader {
 
 
 	/**
+	 * desc 创建 WebApplicationContext 并 存放到 ServletContext 中
 	 * Initialize Spring's web application context for the given servlet context,
 	 * using the application context provided at construction time, or creating a new one
 	 * according to the "{@link #CONTEXT_CLASS_PARAM contextClass}" and
@@ -275,6 +276,7 @@ public class ContextLoader {
 			// Store context in local instance variable, to guarantee that
 			// it is available on ServletContext shutdown.
 			if (this.context == null) {
+				//step1 new一个WebApplicationContext
 				this.context = createWebApplicationContext(servletContext);
 			}
 			if (this.context instanceof ConfigurableWebApplicationContext) {
@@ -288,9 +290,13 @@ public class ContextLoader {
 						ApplicationContext parent = loadParentContext(servletContext);
 						cwac.setParent(parent);
 					}
+					//step2 填充WebApplicationContext
+					// 		-->
+					// 			调用spring的refresh方法,创建所有bean 启动spring
 					configureAndRefreshWebApplicationContext(cwac, servletContext);
 				}
 			}
+			//step3 将创建好的WebApplicationContext存放到servletContext中
 			servletContext.setAttribute(WebApplicationContext.ROOT_WEB_APPLICATION_CONTEXT_ATTRIBUTE, this.context);
 
 			ClassLoader ccl = Thread.currentThread().getContextClassLoader();

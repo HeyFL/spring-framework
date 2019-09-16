@@ -157,6 +157,8 @@ import org.springframework.web.util.WebUtils;
  * @see org.springframework.web.HttpRequestHandler
  * @see org.springframework.web.servlet.mvc.Controller
  * @see org.springframework.web.context.ContextLoaderListener
+ *
+ * ❤ SpringMVC 处理请求的入口  对应方法(HttpServlet#service) ❤
  */
 @SuppressWarnings("serial")
 public class DispatcherServlet extends FrameworkServlet {
@@ -495,18 +497,28 @@ public class DispatcherServlet extends FrameworkServlet {
 	}
 
 	/**
+	 * desc 配置各种servlet组件
 	 * Initialize the strategy objects that this servlet uses.
 	 * <p>May be overridden in subclasses in order to initialize further strategy objects.
 	 */
 	protected void initStrategies(ApplicationContext context) {
+		//初始化文件上传 MultipartResolver(找到处理bean就初始化,默认不会初始化)
 		initMultipartResolver(context);
+		//初始化国际化 LocaleResolver  国际化有三种方式:基于URL(AcceptHeaderLocaleResolver) 基于Session(SessionLocaleResolver) 基于Cookie(CookieLocaleResolver)
 		initLocaleResolver(context);
+		//初始化主题解析器
 		initThemeResolver(context);
+		//初始化HandlerMappings(默认是使用所有实现HandlerMappings接口的bean)
 		initHandlerMappings(context);
+		//初始化HandlerAdapters
 		initHandlerAdapters(context);
+		//初始化异常处理器
 		initHandlerExceptionResolvers(context);
+		//初始化RequestToViewNameTranslator   RequestToViewNameTranslator可以在处理器返回的View为空时使用它根据Request获取viewName
 		initRequestToViewNameTranslator(context);
+		//初始化ViewResolvers 解析modelAndView 渲染返回的页面
 		initViewResolvers(context);
+		//初始化FlashMapManager  支持请求之间的属性暂存(重定向等情况使用)
 		initFlashMapManager(context);
 	}
 
@@ -593,6 +605,7 @@ public class DispatcherServlet extends FrameworkServlet {
 		this.handlerMappings = null;
 
 		if (this.detectAllHandlerMappings) {
+			// desc (默认情况)查找所有的HandlerMapping,包括双亲上下文中定义的
 			// Find all HandlerMappings in the ApplicationContext, including ancestor contexts.
 			Map<String, HandlerMapping> matchingBeans =
 					BeanFactoryUtils.beansOfTypeIncludingAncestors(context, HandlerMapping.class, true, false);
@@ -603,6 +616,7 @@ public class DispatcherServlet extends FrameworkServlet {
 			}
 		}
 		else {
+			//desc (情况2)只获取当前上下文中的HandlerMapping
 			try {
 				HandlerMapping hm = context.getBean(HANDLER_MAPPING_BEAN_NAME, HandlerMapping.class);
 				this.handlerMappings = Collections.singletonList(hm);
@@ -614,6 +628,7 @@ public class DispatcherServlet extends FrameworkServlet {
 
 		// Ensure we have at least one HandlerMapping, by registering
 		// a default HandlerMapping if no other mappings are found.
+		// desc 如果上面没有找到HandlerMapping配置,则加载默认的handlerMappings实现
 		if (this.handlerMappings == null) {
 			this.handlerMappings = getDefaultStrategies(context, HandlerMapping.class);
 			if (logger.isTraceEnabled()) {
