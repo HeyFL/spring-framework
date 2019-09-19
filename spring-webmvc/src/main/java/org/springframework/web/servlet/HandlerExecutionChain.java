@@ -135,11 +135,14 @@ public class HandlerExecutionChain {
 				HandlerInterceptor interceptor = interceptors[i];
 				if (!interceptor.preHandle(request, response, this.handler)) {
 					triggerAfterCompletion(request, response, null);
+					//完成请求处理
 					return false;
 				}
 				this.interceptorIndex = i;
 			}
 		}
+
+		//拦截器为空 or 需要继续处理
 		return true;
 	}
 

@@ -1009,18 +1009,25 @@ public abstract class FrameworkServlet extends HttpServletBean implements Applic
 		long startTime = System.currentTimeMillis();
 		Throwable failureCause = null;
 
+		//step1 获取当前线程的previousLocaleContext与previousAttributes 以便处理请求后还能恢复
+		//step2 创建当前请求的LocaleContext与requestAttributes,并绑定到当前线程(ThreadLocal)
+		//获取当前线程的LocaleContext
 		LocaleContext previousLocaleContext = LocaleContextHolder.getLocaleContext();
+		//建立新的LocaleContext
 		LocaleContext localeContext = buildLocaleContext(request);
 
+		//获取当前线程的RequestAttributes
 		RequestAttributes previousAttributes = RequestContextHolder.getRequestAttributes();
 		ServletRequestAttributes requestAttributes = buildRequestAttributes(request, response, previousAttributes);
 
 		WebAsyncManager asyncManager = WebAsyncUtils.getAsyncManager(request);
 		asyncManager.registerCallableInterceptor(FrameworkServlet.class.getName(), new RequestBindingInterceptor());
 
+		//desc 将localeContext 与requestAttributes绑定到当前线程中(ThreadLocal实现)
 		initContextHolders(request, localeContext, requestAttributes);
 
 		try {
+			//step3 处理请求
 			doService(request, response);
 		}
 		catch (ServletException | IOException ex) {
@@ -1033,11 +1040,17 @@ public abstract class FrameworkServlet extends HttpServletBean implements Applic
 		}
 
 		finally {
+			//step4 请求处理结束后 恢复线程到初始状态
+			//desc 上面已经将localeContext 与requestAttributes  通过ThreadLocal绑定到当前线程中  这里需要把这些ThreadLocal移除
 			resetContextHolders(request, previousLocaleContext, previousAttributes);
+
+			//step5 标记请求已经完成
 			if (requestAttributes != null) {
 				requestAttributes.requestCompleted();
 			}
 			logResult(request, response, failureCause, asyncManager);
+
+			//step6 发布请求完成事件
 			publishRequestHandledEvent(request, response, startTime, failureCause);
 		}
 	}

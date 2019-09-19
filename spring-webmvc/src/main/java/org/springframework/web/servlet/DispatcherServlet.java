@@ -926,6 +926,7 @@ public class DispatcherServlet extends FrameworkServlet {
 
 		// Keep a snapshot of the request attributes in case of an include,
 		// to be able to restore the original attributes after the include.
+		//step1 为当前请求的参数保存快照
 		Map<String, Object> attributesSnapshot = null;
 		if (WebUtils.isIncludeRequest(request)) {
 			attributesSnapshot = new HashMap<>();
@@ -938,6 +939,7 @@ public class DispatcherServlet extends FrameworkServlet {
 			}
 		}
 
+		// step2 为请求设置一些servlet相关的参数,如上下文(子),国际化/主题处理器等
 		// Make framework objects available to handlers and view objects.
 		request.setAttribute(WEB_APPLICATION_CONTEXT_ATTRIBUTE, getWebApplicationContext());
 		request.setAttribute(LOCALE_RESOLVER_ATTRIBUTE, this.localeResolver);
@@ -954,6 +956,7 @@ public class DispatcherServlet extends FrameworkServlet {
 		}
 
 		try {
+			//step3 处理请求
 			doDispatch(request, response);
 		}
 		finally {
@@ -1022,20 +1025,26 @@ public class DispatcherServlet extends FrameworkServlet {
 			Exception dispatchException = null;
 
 			try {
+				//step1 如果是multipart的请求  request转换为MultipartHttpServletRequest进行处理
 				processedRequest = checkMultipart(request);
 				multipartRequestParsed = (processedRequest != request);
 
 				// Determine handler for the current request.
+				// step2 找到对应的handler(是一个包装类,包含handler和他对应的interceptor)
+				//desc 这里会找到和url匹配的拦截器 (每一个@RequestMapping对应着一个handler)
 				mappedHandler = getHandler(processedRequest);
 				if (mappedHandler == null) {
+					//desc 没找到对应的处理器,通过response返回异常
 					noHandlerFound(processedRequest, response);
 					return;
 				}
 
 				// Determine handler adapter for the current request.
+				//step3 找到对应的HandlerAdapter
 				HandlerAdapter ha = getHandlerAdapter(mappedHandler.getHandler());
 
 				// Process last-modified header, if supported by the handler.
+				// step4 如果上面的handlerAdapter支持修改lastModified 那么就处理一下这个lastModified头
 				String method = request.getMethod();
 				boolean isGet = "GET".equals(method);
 				if (isGet || "HEAD".equals(method)) {
@@ -1045,11 +1054,14 @@ public class DispatcherServlet extends FrameworkServlet {
 					}
 				}
 
+				//step5 ❤调用Handler的拦截器preHandle方法❤
 				if (!mappedHandler.applyPreHandle(processedRequest, response)) {
+					//desc 在拦截器中完成了请求的处理(一般是拦截器处理异常了)
 					return;
 				}
 
 				// Actually invoke the handler.
+				//step6 真正通过handler处理请求  ❤通过适配器HandlerAdapter间接处理请求❤
 				mv = ha.handle(processedRequest, response, mappedHandler.getHandler());
 
 				if (asyncManager.isConcurrentHandlingStarted()) {
@@ -1057,8 +1069,10 @@ public class DispatcherServlet extends FrameworkServlet {
 				}
 
 				applyDefaultViewName(processedRequest, mv);
+				//step7 ❤调用Handler拦截器postHandle方法❤
 				mappedHandler.applyPostHandle(processedRequest, response, mv);
 			}
+			//desc 对异常的记录
 			catch (Exception ex) {
 				dispatchException = ex;
 			}
@@ -1067,8 +1081,13 @@ public class DispatcherServlet extends FrameworkServlet {
 				// making them available for @ExceptionHandler methods and other scenarios.
 				dispatchException = new NestedServletException("Handler dispatch failed", err);
 			}
+
+			//step8 对结果进行处理  结果要么是ModelAndView 要么是其异常
 			processDispatchResult(processedRequest, response, mappedHandler, mv, dispatchException);
 		}
+		//step9 异常处理
+		//desc 调用mappedHandler的拦截器的AfterCompletion方法
+		// 上面对结果的处理时也会调用这个方法
 		catch (Exception ex) {
 			triggerAfterCompletion(processedRequest, response, mappedHandler, ex);
 		}
@@ -1077,6 +1096,8 @@ public class DispatcherServlet extends FrameworkServlet {
 					new NestedServletException("Handler processing failed", err));
 		}
 		finally {
+			//step10 完成请求
+			//desc 收尾工作  标记请求处理完成
 			if (asyncManager.isConcurrentHandlingStarted()) {
 				// Instead of postHandle and afterCompletion
 				if (mappedHandler != null) {
@@ -1119,6 +1140,7 @@ public class DispatcherServlet extends FrameworkServlet {
 				logger.debug("ModelAndViewDefiningException encountered", exception);
 				mv = ((ModelAndViewDefiningException) exception).getModelAndView();
 			}
+			//desc 处理异常
 			else {
 				Object handler = (mappedHandler != null ? mappedHandler.getHandler() : null);
 				mv = processHandlerException(request, response, handler, exception);
@@ -1128,6 +1150,7 @@ public class DispatcherServlet extends FrameworkServlet {
 
 		// Did the handler return a view to render?
 		if (mv != null && !mv.wasCleared()) {
+			//desc 如果需要跳转   解析跳转视图并返回
 			render(mv, request, response);
 			if (errorView) {
 				WebUtils.clearErrorRequestAttributes(request);
@@ -1341,6 +1364,7 @@ public class DispatcherServlet extends FrameworkServlet {
 	}
 
 	/**
+	 * desc 解析返回的视图
 	 * Render the given ModelAndView.
 	 * <p>This is the last stage in handling a request. It may involve resolving the view by name.
 	 * @param mv the ModelAndView to render
